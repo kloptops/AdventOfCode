@@ -12,7 +12,7 @@ def process(data):
 
 
 def main():
-    data = load_array(load_data('input_001.txt'))
+    data = list(load_data('input_001.txt'))
 
     results = process(data)
 
