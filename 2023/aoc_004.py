@@ -88,6 +88,16 @@ def load_lotto(in_data):
 
 
 def set_amounts(data, card_amounts, card_id, amount):
+    """
+    This simple function accumulates cards won.
+
+    <card_id> wins a copy of the next <amount> cards. 
+
+    Since previous cards can win a "copy" of this card and all the cards it has won
+    we need set a <multiplier> of "card_amounts[card_id] + 1",
+    we then add <multiplier> to the next <amount> cards.
+    """
+
     multiplier = card_amounts.setdefault(card_id, 0) + 1
     card_amounts[card_id] += 1
 
