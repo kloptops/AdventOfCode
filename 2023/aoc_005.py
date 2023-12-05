@@ -192,12 +192,11 @@ def get_jobs(seeds, job_id, total_jobs):
         yield from range(seed + job_id, seed + amount, total_jobs)
 
 
-def process(maps, seeds, job_id):
+def process(maps, seeds, job_id, total_jobs):
     total_a = 0
     total_b = 0
 
     if job_id is None:
-        print(get_jobs(seeds, job_id))
         total_a = 1 << 64
         for i, seed in enumerate(seeds):
             location = do_mapping(maps, 'seed', 'location', seed)
@@ -205,8 +204,8 @@ def process(maps, seeds, job_id):
                 total_a = location
 
     else:
-        total_jobs = 16
         total_b = 1 << 64
+
         for seed in get_jobs(seeds, job_id, total_jobs):
             location = do_mapping(maps, 'seed', 'location', seed)
             if location < total_b:
@@ -218,13 +217,15 @@ def process(maps, seeds, job_id):
 def main(argv):
     maps, seeds = load_maps(load_data('input_005.txt'))
 
-    if len(argv) > 1:
+    if len(argv) > 2:
         job_id = int(argv[1])
+        total_jobs = int(argv[2])
 
     else:
         job_id = None
+        total_jobs = None
 
-    results = process(maps, seeds, job_id)
+    results = process(maps, seeds, job_id, total_jobs)
 
     if job_id is None:
         print(results[0], '==', 177942185)
