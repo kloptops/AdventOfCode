@@ -155,25 +155,23 @@ def trial_hands(hand):
 
 
 def best_hand_info(hand):
-    base_hand_info = hand_info(hand)
+    best_hand_info = hand_info(hand)
 
     if 'J' not in hand:
-        return base_hand_info
+        return best_hand_info
 
     if hand == 'JJJJJ':
-        return base_hand_info
+        return best_hand_info
 
-    best_hand_info = base_hand_info.copy()
     for trial_hand in trial_hands(hand):
         new_hand_info = hand_info(trial_hand)
-        if hand_compare([best_hand_info], [new_hand_info]) < 0:
+        if hand_compare2([best_hand_info], [new_hand_info]) < 0:
             best_hand_info = new_hand_info
 
-    print(f"{hand} -> {best_hand_info['hand']}")
-    del best_hand_info['hand']
-    base_hand_info.update(**best_hand_info)
+    # print(f"{hand} -> {best_hand_info['hand']}")
+    best_hand_info['hand'] = hand
 
-    return base_hand_info
+    return best_hand_info
 
 
 def load_hands(data):
@@ -211,7 +209,7 @@ def main():
     results = process(data1, data2)
 
     print(results[0], '==', 248179786)
-    print(results[1], '==', None)
+    print(results[1], '==', 247885995)
 
 
 if __name__ == '__main__':
