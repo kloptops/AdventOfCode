@@ -75,8 +75,29 @@ Adding all of the possible arrangement counts together produces a total of 21 ar
 For each row, count all of the different arrangements of operational and broken springs that meet the given criteria. What is the sum of those counts?
 
 """
-from util import *
+"""
+Attempt 1 & 2 revolved around creating codes and matching them against the pattern.
+
+Attempt 1 was way too optimistic
+
+Attempt 2 took a bit of fiddling, but was too slow on patterns with billions of combinations, and required lots of ram.
+
+Both of these attempts used queues and not recursion, they got out of hand.
+
+Attemp 3 i took a different approach, this time i focused on the pattern.
+This time is usees recursion to try both . & # for any occurrence of ?, we cache the results by "hashing" the pattern.
+
+The hash is just a simplified version of the pattern. "#......#" should be the same as "#....#" as long as the pattern is complete.
+
+Currently it takes a few minutes on my MBP with python3.11, and 20 or so seconds with pypy3.10. GOOD ENOUGH.
+"""
+
+
 import collections
+import functools
+import json
+
+from util import *
 
 
 def load_records(data):
@@ -104,7 +125,8 @@ def match_pattern(code, pattern):
 
     return True
 
-
+############################################################
+## Attempt 1, too slow
 def permutations(amount, size):
     stack = collections.deque((
         (i, [amount - i])
@@ -130,7 +152,10 @@ def permutations(amount, size):
             stack.append((j, temp))
 
 
-def make_codes(broken, max_len):
+def make_codes(pattern, broken):
+    ## This is too slow. :/
+
+    max_len = len(pattern)
     items = list(map(lambda x: '#' * x, broken))
     extra_spaces = max_len - sum(broken) - len(broken) + 1
 
@@ -148,31 +173,175 @@ def make_codes(broken, max_len):
 
         yield ''.join(results)
 
+############################################################
+## Attempt 2, too slow
+def make_codes2(pattern, broken):
+    ## This is still too slow. :(
 
+    max_len = len(pattern)
+    items = list(map(lambda x: '#' * x, broken))
+    extra_spaces = max_len - sum(broken) - len(broken) + 1
+    size = (len(broken) + 1)
+
+    stack = collections.deque((
+        (i, (extra_spaces - i), 0, '.' * (extra_spaces - i))
+        for i in range(extra_spaces + 1)))
+
+    counter = 0
+    while len(stack) > 0:
+        i, val, itx, new_code = stack.popleft()
+        counter += 1
+
+        if not match_pattern(new_code, pattern):
+            continue
+
+        if (counter % 100_000) == 0:
+            print(f"{counter:,d}, {len(stack):,d}, {extra_spaces}, {i}, {val}, {itx} / {len(items)}, {new_code}, {pattern}, {broken}")
+
+        if i == 0:
+            while itx < size-1:
+                if itx > 0:
+                    new_code += '.'
+
+                new_code += items[itx]
+                itx += 1
+
+            if not match_pattern(new_code, pattern):
+                continue
+
+            yield (0, new_code)
+            continue
+
+        if itx == size-1:
+            continue
+
+        if itx > 0:
+            new_code += '.'
+
+        new_code += items[itx]
+
+        for j in range(i + 1):
+            if (itx + 1) == (size - 1) and j != 0:
+                continue
+
+            temp = new_code + ('.' * (extra_spaces - j - val))
+
+            if not match_pattern(temp, pattern):
+                continue
+
+            # print((j, val + j, itx))
+            stack.append((j, extra_spaces - j, itx + 1, temp))
+
+## Used in both attempt 1 and 2
 def arrangementor(pattern, broken):
     total = 0
 
-    for code in make_codes(broken, len(pattern)):
-        if not match_pattern(code, pattern):
-            continue
+    try:
+        for ct, code in make_codes2(pattern, broken):
+            # print(ct, code, pattern, broken)
+            if not match_pattern(code, pattern):
+                continue
 
-        # print(broken, code, pattern)
+            # print(broken, code, pattern)
 
-        total += 1
+            total += 1
+
+    except:
+        return 0
 
     return total
+
+
+############################################################
+## Attempt 3, not super fast, but seems to work
+@functools.lru_cache
+def count_broken(pattern):
+    output = []
+    count = 0
+
+    for c in pattern:
+        if c == '.' and count > 0:
+            output.append(count)
+            count = 0
+            continue
+
+        if c == '#':
+            count += 1
+
+    if count > 0:
+        output.append(count)
+
+    return output
+
+
+def hash_pattern(pattern):
+    new_pattern = ''
+
+    for c in pattern:
+        if c == '.':
+            if not new_pattern.endswith('.'):
+                new_pattern += c
+
+        else:
+            new_pattern += c
+
+    return new_pattern
+
+
+arrangementor2_cache = {}
+def arrangementor2(pattern, broken):
+    h_pattern = hash_pattern(pattern)
+    if h_pattern in arrangementor2_cache:
+        return arrangementor2_cache[h_pattern]
+
+    if '?' not in pattern:
+        # pattern is complete, lets see if it matches
+        if count_broken(h_pattern) == broken:
+            arrangementor2_cache[h_pattern] = 1
+            return 1
+
+        else:
+            arrangementor2_cache[h_pattern] = 0
+            return 0
+
+    # Split our pattern at the first ?
+    l_pattern, r_pattern = pattern.split('?', 1)
+
+    # Optimisation, count the broken springs and compare to the broken record.
+    l_broken = count_broken(l_pattern)
+    # If the left hand side of our pattern doesnt match the expected broken record, we can skip trying any further
+    # We dont count the last broken count as it might be in progress.
+    if len(l_broken) > 1 and l_broken[:-1] != broken[:(len(l_broken)-1)]:
+        # Skip this line of thinking
+        arrangementor2_cache[h_pattern] = 0
+        return 0
+
+    # Now calculate it as if the ? was a .
+    result = arrangementor2(l_pattern + '.' + r_pattern, broken)
+
+    # Then calculate if the ? was a #
+    result += arrangementor2(l_pattern + '#' + r_pattern, broken)
+
+    # Cache it
+    arrangementor2_cache[h_pattern] = result
+    return result
 
 
 def process(data1, data2):
     total_a = 0
     total_b = 0
 
-    for code, broken in data1:
-        total_a += arrangementor(code, broken)
+    for i, (code, broken) in enumerate(data1):
+        arrangementor2_cache.clear()
+        arrangements = arrangementor2(code, broken)
+        print(i, code, broken, arrangements)
+        total_a += arrangements
 
-    # for code, broken in data2:
-    #     total_b += arrangementor(code, broken)
-    #     print(total_b)
+    for i, (code, broken) in enumerate(data2):
+        arrangementor2_cache.clear()
+        arrangements = arrangementor2(code, broken)
+        print(i, code, broken, arrangements)
+        total_b += arrangements
 
     return total_a, total_b
 
@@ -182,8 +351,8 @@ def main():
 
     results = process(data1, data2)
 
-    print(results[0], '==', 7670)
-    print(results[1], '==', None)
+    print(results[0], '==', 7_670)
+    print(results[1], '==', 157_383_940_585_037)
 
 
 if __name__ == '__main__':
