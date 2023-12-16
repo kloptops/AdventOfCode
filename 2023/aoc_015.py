@@ -216,7 +216,7 @@ def DO_HASHMAP(data):
         # print(i, box)
         for j, (key, value) in enumerate(box.items(), 1):
             total += i * j * value
-            print(f"{key}: {i} * {value} * {j} = {i * j * value}, {total}")
+            print(f"{key:10s}: {i:3d} * {value} * {j} = {i * j * value:5,d}")
 
     return total
 
@@ -240,7 +240,7 @@ def main():
     results = process(data)
 
     print(results[0], '==', 521_341)
-    print(results[1], '==', None)
+    print(results[1], '==', 252_782)
 
 
 if __name__ == '__main__':

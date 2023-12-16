@@ -63,8 +63,68 @@ To summarize your pattern notes, add up the number of columns to the left of eac
 
 Find the line of reflection in each of the patterns in your notes. What number do you get after summarizing all of your notes?
 
+--- Part Two ---
+
+You resume walking through the valley of mirrors and - SMACK! - run directly into one. Hopefully nobody was watching, because that must have been pretty embarrassing.
+
+Upon closer inspection, you discover that every mirror has exactly one smudge: exactly one . or # should be the opposite type.
+
+In each pattern, you'll need to locate and fix the smudge that causes a different reflection line to be valid. (The old reflection line won't necessarily continue being valid after the smudge is fixed.)
+
+Here's the above example again:
+
+    #.##..##.
+    ..#.##.#.
+    ##......#
+    ##......#
+    ..#.##.#.
+    ..##..##.
+    #.#.##.#.
+
+    #...##..#
+    #....#..#
+    ..##..###
+    #####.##.
+    #####.##.
+    ..##..###
+    #....#..#
+
+The first pattern's smudge is in the top-left corner. If the top-left # were instead ., it would have a different, horizontal line of reflection:
+
+    1 ..##..##. 1
+    2 ..#.##.#. 2
+    3v##......#v3
+    4^##......#^4
+    5 ..#.##.#. 5
+    6 ..##..##. 6
+    7 #.#.##.#. 7
+
+With the smudge in the top-left corner repaired, a new horizontal line of reflection between rows 3 and 4 now exists. Row 7 has no corresponding reflected row and can be ignored, but every other row matches exactly: row 1 matches row 6, row 2 matches row 5, and row 3 matches row 4.
+
+In the second pattern, the smudge can be fixed by changing the fifth symbol on row 2 from . to #:
+
+    1v#...##..#v1
+    2^#...##..#^2
+    3 ..##..### 3
+    4 #####.##. 4
+    5 #####.##. 5
+    6 ..##..### 6
+    7 #....#..# 7
+
+Now, the pattern has a different horizontal line of reflection between rows 1 and 2.
+
+Summarize your notes as before, but instead use the new different reflection lines. In this example, the first pattern's new horizontal line has 3 rows above it and the second pattern's new horizontal line has 1 row above it, summarizing to the value 400.
+
+In each pattern, fix the smudge and find the different line of reflection. What number do you get after summarizing the new reflection line in each pattern in your notes?
+
 """
 from util import *
+
+
+def map_display(current_map):
+    print('-' * len(current_map[0]))
+    print('\n'.join(current_map))
+    print('-' * len(current_map[0]))
 
 
 def load_maps(data):
@@ -99,7 +159,7 @@ def check_symmetry(i, text):
     a, b = text[:i], text[i:]
     # print(a, b)
     min_len = min(len(a), len(b))
-    print(f"{a[-min_len:]} == {b[:min_len]}")
+    # print(f"{a[-min_len:]} == {b[:min_len]}")
     return a[-min_len:] == b[:min_len][::-1]
 
 
@@ -119,37 +179,61 @@ def find_symmetry(current_map):
             return i
 
 
-def find_symmetry_smudge(current_map):
+def check_symmetry_diff(i, text):
+    a, b = text[:i], text[i:]
+    min_len = min(len(a), len(b))
+    a, b = a[-min_len:], b[:min_len][::-1]
+
+    diffs = 0
+    for (ac, bc) in zip(a, b):
+        if ac != bc:
+            diffs += 1
+
+    print(a, b, diffs)
+
+    return diffs
+
+
+def find_symmetry_smudge(current_map, first_run=True):
+    map_display(current_map)
+
+    seen_indexes = set()
     for line in current_map:
         for i in symmetry_iter(line):
+            if i in seen_indexes:
+                continue
+
+            seen_indexes.add(i)
+
             bad_rows = 0
             for line in current_map:
-                if not check_symmetry(i, line):
+                diff = check_symmetry_diff(i, line)
+                if diff > 0:
+                    # We are allowed one change, so more than one means a fail
+                    if diff > 1:
+                        bad_rows += 2
+                        break
+
+                    # We found our first change
                     if bad_rows == 0:
                         bad_rows += 1
+                        continue
 
+                    # Second change means a fail.
                     if bad_rows == 1:
                         bad_rows += 1
                         break
 
+            # We only want a second change.
             if bad_rows == 1:
+                if not first_run:
+                    i *= 100
+
+                print(f">>{i=}<<")
                 return i
 
-    current_map = map_rotate(current_map)
-
-    for line in current_map:
-        for i in symmetry_iter(line):
-            bad_rows = 0
-            for line in current_map:
-                if not check_symmetry(i, line):
-                    if bad_rows == 0:
-                        bad_rows += 1
-
-                    if bad_rows == 1:
-                        break
-
-            if bad_rows == 1:
-                return i
+    if first_run:
+        return find_symmetry_smudge(map_rotate(current_map), False)
 
 
 def process(data):
