@@ -22,27 +22,35 @@ REV_DIRECTIONS = {
     }
 
 
-def adj_coord(coord, adj):
-    return (coord[0] + adj[0], coord[1] + adj[1])
+def adj_coord(coord, adj, mult=1):
+    return (coord[0] + (adj[0] * mult), coord[1] + (adj[1] * mult))
 
 
 class SpatialMap():
     def __init__(self):
         self.cells = {}
         self.visited_cells = set()
+        self.min_x = 0
+        self.min_y = 0
         self.max_x = 0
         self.max_y = 0
 
     def valid_coord(self, coord):
-        if not (0 <= coord[0] < self.max_x):
+        if not (self.min_x <= coord[0] < self.max_x):
             return False
 
-        if not (0 <= coord[1] < self.max_y):
+        if not (self.min_y <= coord[1] < self.max_y):
             return False
 
         return True
 
     def set_cell(self, coord, value):
+        if coord[0] < self.min_x:
+            self.min_x = coord[0]
+
+        if coord[1] < self.min_y:
+            self.min_y = coord[1]
+
         if coord[0] >= self.max_x:
             self.max_x = coord[0] + 1
 
