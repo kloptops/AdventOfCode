@@ -152,8 +152,8 @@ def main():
 
     results = process(instructions)
 
-    print(results[0], '==', 58550)
-    print(results[1], '==', 952_408_144_115)
+    print(results[0], '==', 58_550)
+    print(results[1], '==', 47_452_118_468_566)
 
 
 if __name__ == '__main__':
