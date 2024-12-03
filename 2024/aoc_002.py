@@ -196,7 +196,7 @@ def main():
     results = process(data)
 
     print(results[0], '==', 407)
-    print(results[1], '>=', 455)
+    print(results[1], '==', 459)
 
 
 if __name__ == '__main__':
