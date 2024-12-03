@@ -62,6 +62,12 @@ Update your analysis by handling situations where the Problem Dampener can remov
 
 from util import *
 
+def impossible_doubles(items):
+    """
+    This quick check rules out impossible combos.
+    """
+    return (len(items) - len(set(items))) > 1
+
 BUFFER=""
 def print_buff(text, end="\n"):
     global BUFFER
@@ -95,7 +101,10 @@ def detect_changes(items, min_diff, max_diff, do_try=False):
                 elif i == len(items)-1 and detect_changes(items[:i], min_diff, max_diff):
                     return True
 
-                return detect_changes(items[:i-1] + items[i:], min_diff, max_diff)
+                elif detect_changes(items[:i-1] + items[i:], min_diff, max_diff):
+                    return True
+
+                return detect_changes(items[:i] + items[i+1:], min_diff, max_diff)
 
             return False
 
@@ -110,7 +119,10 @@ def detect_changes(items, min_diff, max_diff, do_try=False):
                 elif i == len(items)-1 and detect_changes(items[:i], min_diff, max_diff):
                     return True
 
-                return detect_changes(items[:i-1] + items[i:], min_diff, max_diff)
+                elif detect_changes(items[:i-1] + items[i:], min_diff, max_diff):
+                    return True
+
+                return detect_changes(items[:i] + items[i+1:], min_diff, max_diff)
 
             return False
 
@@ -130,7 +142,10 @@ def detect_changes(items, min_diff, max_diff, do_try=False):
                 elif i == len(items)-1 and detect_changes(items[:i], min_diff, max_diff):
                     return True
 
-                return detect_changes(items[:i-1] + items[i:], min_diff, max_diff)
+                elif detect_changes(items[:i-1] + items[i:], min_diff, max_diff):
+                    return True
+
+                return detect_changes(items[:i] + items[i+1:], min_diff, max_diff)
 
             return False
 
@@ -148,6 +163,10 @@ def process(data):
 
     ## Do something here.
     for report in data:
+        # These are impossible to be true.
+        if impossible_doubles(report):
+            continue
+
         print_buff(f"=======")
         if detect_changes(report, 0, 4):
             total_a += 1
@@ -171,7 +190,7 @@ def process(data):
 
 def main():
     data = [
-        [int(x) for x in line.split(' ')]
+        tuple(int(x) for x in line.split(' '))
         for line in load_data('input_002.txt')]
 
     results = process(data)
