@@ -151,7 +151,7 @@ def main():
     results = process(manuals, sort_rules)
 
     print(results[0], '==', 4609)
-    print(results[1], '==', None)
+    print(results[1], '==', 5723)
 
 
 if __name__ == '__main__':

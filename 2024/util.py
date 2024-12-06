@@ -72,7 +72,7 @@ class SpatialMap():
         return self.cells.get(coord, default)
 
     def clear_cell(self, coord):
-        if coord in cells:
+        if coord in self.cells:
             del self.cells[coord]
 
     def visit_cell(self, coord):
